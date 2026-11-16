@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>画面共有サポート｜ZCCコブラウズデモ</title>
+  <style>
+    :root {
+      --brand: #0b5cad;
+      --brand-dark: #08457f;
+      --text: #1f2933;
+      --muted: #5f6b7a;
+      --border: #d5dbe3;
+      --bg: #f4f6f9;
+      --ok: #1d7a46;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.7;
+    }
+    header { background: #fff; border-bottom: 3px solid var(--brand); }
+    .header-inner { max-width: 960px; margin: 0 auto; padding: 14px 20px; }
+    .logo { font-size: 20px; font-weight: 700; color: var(--brand); }
+    main { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px 24px;
+      text-align: center;
+    }
+    h1 { margin: 0 0 8px; font-size: 24px; }
+    .lead { color: var(--muted); margin: 0 0 24px; }
+
+    /* コブラウズ開始ボタン */
+    #startCobrowseButton {
+      appearance: none;
+      border: none;
+      border-radius: 999px;
+      padding: 16px 40px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--brand);
+      cursor: pointer;
+      transition: background .2s;
+    }
+    #startCobrowseButton:hover:not(:disabled) { background: var(--brand-dark); }
+    #startCobrowseButton:disabled { background: #9aa5b1; cursor: not-allowed; }
+
+    .cobrowse-status { display: block; margin-top: 12px; font-size: 14px; color: var(--muted); }
+    .cobrowse-status.ready { color: var(--ok); font-weight: 700; }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 32px;
+      text-align: left;
+    }
+    .step { background: var(--bg); border-radius: 8px; padding: 16px; font-size: 14px; }
+    .step b { display: block; color: var(--brand); margin-bottom: 4px; }
+    footer { text-align: center; font-size: 12px; color: var(--muted); padding: 24px; }
+  </style>
+
+  <!--
+    ① コブラウズ準備完了イベントの受信処理
+       SDKより先に読み込み、準備完了イベントを取り逃さないようにします。
+  -->
+  <script>
+    (function () {
+      var BUTTON_ID = 'startCobrowseButton';
+      var isReady = false;
+
+      function getSdk() {
+        return window.ZoomZccCobrowseSDK;
+      }
+
+      function setStatus(text, ready) {
+        var status = document.getElementById('cobrowseStatus');
+        if (!status) return;
+        status.textContent = text;
+        status.classList.toggle('ready', !!ready);
+      }
+
+      function enableCobrowseButton() {
+        if (isReady) return;
+        var button = document.getElementById(BUTTON_ID);
+        if (!button || !getSdk()) return;
+
+        isReady = true;
+        button.disabled = false;
+        setStatus('画面共有サポートをご利用いただけます', true);
+
+        // クリックでSDKを起動（セッションコード入力画面はSDKが表示）
+        button.addEventListener('click', function () {
+          try {
+            getSdk().init();
+          } catch (e) {
+            console.error('[ZCC Cobrowse] 開始できませんでした', e);
+            alert('画面共有サポートの準備中です。しばらくしてから再度お試しください。');
+          }
+        });
+      }
+
+      function onReady() {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', enableCobrowseButton, { once: true });
+        } else {
+          enableCobrowseButton();
+        }
+      }
+
+      // Zoom公式ドキュメントに記載されている2種類のイベント名に対応
+      window.addEventListener('ZoomZccCobrowseSDK:Ready', onReady);
+      window.addEventListener('zoomCobrowse:Ready', onReady);
+
+      // イベントを取り逃した場合に備え、SDKの読み込み状況も確認（最大30秒）
+      window.addEventListener('load', function () {
+        var count = 0;
+        var timer = setInterval(function () {
+          count++;
+          if (isReady || getSdk()) {
+            enableCobrowseButton();
+            clearInterval(timer);
+          } else if (count >= 30) {
+            clearInterval(timer);
+            setStatus('画面共有サポートを読み込めませんでした', false);
+            console.warn('[ZCC Cobrowse] SDKの準備完了を確認できませんでした。Webタグ、ドメイン設定、コブラウズ設定を確認してください。');
+          }
+        }, 1000);
+      });
+    })();
+  </script>
+
+  <!--
+    ② ZCC Webタグ（Campaign Management > Embed Web Tag で取得したもの）
+       data-enable-zcb / data-enable-z-c-b はコブラウズを有効にするための追加属性です。
+       ※ポータルの埋め込み画面にコブラウズ用の指定が表示される場合は、その表記を優先してください。
+  -->
+  <script type="module"
+          src="https://us01ccistatic.zoom.us/us01cci/web-sdk/zcc-sdk.js"
+          data-apikey="0MrhBm4MQx-yjOjbutH87A"
+          data-env="us01"
+          data-enable-zcb="true"
+          data-enable-z-c-b="true"></script>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo">サポートセンター</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h1>画面共有サポート</h1>
+      <p class="lead">オペレーターがお客さまと同じ画面を見ながらご案内します。</p>
+
+      <!-- ③ コブラウズ開始ボタン（SDKの準備完了後に有効化） -->
+      <button id="startCobrowseButton" type="button" disabled>画面共有サポートを開始</button>
+      <span id="cobrowseStatus" class="cobrowse-status">画面共有サポートを準備中です…</span>
+
+      <div class="steps">
+        <div class="step"><b>STEP 1</b>サポートセンターへお電話ください</div>
+        <div class="step"><b>STEP 2</b>オペレーターの案内後、「画面共有サポートを開始」を押してください</div>
+        <div class="step"><b>STEP 3</b>表示された画面に、オペレーターから伝えられたコードを入力してください</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>Zoom Contact Center コブラウズ デモページ</footer>
+</body>
+</html>
