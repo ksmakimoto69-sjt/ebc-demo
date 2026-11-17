@@ -3,16 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>画面共有サポート｜ZCCコブラウズデモ</title>
+  <title>サポートセンター｜ZCCコブラウズデモ</title>
   <style>
     :root {
       --brand: #0b5cad;
       --brand-dark: #08457f;
+      --brand-light: #e7f0fa;
       --text: #1f2933;
       --muted: #5f6b7a;
       --border: #d5dbe3;
       --bg: #f4f6f9;
       --ok: #1d7a46;
+      --ok-light: #e8f5ee;
+      --warn: #a15c00;
+      --err: #c62828;
     }
     * { box-sizing: border-box; }
     body {
@@ -22,48 +26,131 @@
       background: var(--bg);
       line-height: 1.7;
     }
-    header { background: #fff; border-bottom: 3px solid var(--brand); }
-    .header-inner { max-width: 960px; margin: 0 auto; padding: 14px 20px; }
-    .logo { font-size: 20px; font-weight: 700; color: var(--brand); }
-    main { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
-    .card {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 32px 24px;
-      text-align: center;
-    }
-    h1 { margin: 0 0 8px; font-size: 24px; }
-    .lead { color: var(--muted); margin: 0 0 24px; }
 
-    /* コブラウズ開始ボタン */
+    /* ヘッダー（コブラウズ開始ボタン） */
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: #fff; border-bottom: 3px solid var(--brand);
+    }
+    .header-inner {
+      max-width: 1040px; margin: 0 auto; padding: 12px 20px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+    .logo { font-size: 20px; font-weight: 700; color: var(--brand); }
+    .logo small { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
+    .cobrowse-box { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .cobrowse-status { font-size: 13px; color: var(--muted); }
+    .cobrowse-status.ready { color: var(--ok); font-weight: 700; }
     #startCobrowseButton {
-      appearance: none;
-      border: none;
-      border-radius: 999px;
-      padding: 16px 40px;
-      font-size: 17px;
-      font-weight: 700;
-      color: #fff;
-      background: var(--brand);
-      cursor: pointer;
-      transition: background .2s;
+      appearance: none; border: none; border-radius: 999px;
+      padding: 12px 24px; font-size: 15px; font-weight: 700;
+      color: #fff; background: var(--brand); cursor: pointer; transition: background .2s;
     }
     #startCobrowseButton:hover:not(:disabled) { background: var(--brand-dark); }
     #startCobrowseButton:disabled { background: #9aa5b1; cursor: not-allowed; }
 
-    .cobrowse-status { display: block; margin-top: 12px; font-size: 14px; color: var(--muted); }
-    .cobrowse-status.ready { color: var(--ok); font-weight: 700; }
+    main { max-width: 1040px; margin: 0 auto; padding: 24px 20px 60px; }
 
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px;
-      margin-top: 32px;
-      text-align: left;
+    /* ページ内タブ */
+    .tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--border); margin-bottom: 20px; flex-wrap: wrap; }
+    .tab-btn {
+      appearance: none; border: none; background: none; cursor: pointer;
+      padding: 12px 20px; font-size: 15px; font-weight: 700; color: var(--muted);
+      border-bottom: 3px solid transparent; margin-bottom: -2px; font-family: inherit;
     }
-    .step { background: var(--bg); border-radius: 8px; padding: 16px; font-size: 14px; }
-    .step b { display: block; color: var(--brand); margin-bottom: 4px; }
+    .tab-btn[aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+    h2 { margin: 0 0 4px; font-size: 20px; }
+    .sub { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+    h3 { font-size: 16px; margin: 0 0 12px; border-left: 4px solid var(--brand); padding-left: 10px; }
+
+    /* ステッパー */
+    .stepper { display: flex; gap: 8px; margin-bottom: 24px; }
+    .stepper div {
+      flex: 1; text-align: center; font-size: 13px; padding: 8px 4px;
+      border-radius: 6px; background: var(--bg); color: var(--muted); font-weight: 700;
+    }
+    .stepper div.current { background: var(--brand); color: #fff; }
+    .stepper div.done { background: var(--brand-light); color: var(--brand); }
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+
+    /* 選択カード */
+    .choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .choice { position: relative; display: block; cursor: pointer; }
+    .choice input { position: absolute; opacity: 0; }
+    .choice span {
+      display: block; border: 2px solid var(--border); border-radius: 10px; padding: 16px;
+      font-weight: 700; background: #fff; transition: border-color .15s, background .15s;
+    }
+    .choice span small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+    .choice input:checked + span { border-color: var(--brand); background: var(--brand-light); }
+    .choice input:focus-visible + span { outline: 3px solid #9cc3ec; }
+
+    /* フォーム部品 */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px 20px; margin-bottom: 20px; }
+    label.field { display: block; font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .req { color: var(--err); font-size: 12px; margin-left: 4px; }
+    input[type="text"], input[type="number"], input[type="date"], select, textarea {
+      width: 100%; padding: 10px 12px; font-size: 15px;
+      border: 1px solid var(--border); border-radius: 6px; background: #fff; font-family: inherit;
+    }
+    textarea { min-height: 96px; }
+    .counter { text-align: right; font-size: 12px; color: var(--muted); }
+    .checks { display: grid; gap: 8px; margin-bottom: 20px; }
+    .checks label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+    .checks input { margin-top: 5px; }
+    .radio-row { display: flex; gap: 20px; flex-wrap: wrap; font-size: 14px; }
+    .radio-row label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+    .error { display: none; color: var(--err); font-size: 13px; margin: -8px 0 16px; font-weight: 700; }
+    .error.show { display: block; }
+
+    /* ボタン */
+    .actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+    .btn {
+      appearance: none; border-radius: 6px; padding: 12px 28px; font-size: 15px; font-weight: 700;
+      cursor: pointer; font-family: inherit; border: 2px solid var(--brand);
+    }
+    .btn-primary { background: var(--brand); color: #fff; }
+    .btn-primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+    .btn-secondary { background: #fff; color: var(--brand); }
+    .btn-secondary:hover { background: var(--brand-light); }
+
+    /* 確認・完了 */
+    .summary { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+    .summary th, .summary td { border-bottom: 1px solid var(--border); padding: 10px 8px; text-align: left; vertical-align: top; }
+    .summary th { width: 32%; color: var(--muted); font-weight: 700; background: var(--bg); }
+    .done-box { text-align: center; padding: 24px; background: var(--ok-light); color: var(--ok); border-radius: 10px; }
+    .done-box .num { font-size: 22px; font-weight: 700; letter-spacing: .1em; }
+
+    /* シミュレーター */
+    .sim { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+    input[type="range"] { width: 100%; accent-color: var(--brand); }
+    .range-val { font-size: 22px; font-weight: 700; color: var(--brand); }
+    .result {
+      background: var(--brand-light); color: var(--text); border-radius: 10px; padding: 20px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .result .big { font-size: 32px; font-weight: 700; color: var(--brand); }
+    .result dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; font-size: 14px; margin: 12px 0 0; }
+    .result dt { color: var(--muted); }
+    .result dd { margin: 0; font-weight: 700; text-align: right; }
+
+    /* FAQ */
+    details { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; background: #fff; }
+    summary { cursor: pointer; padding: 14px 16px; font-weight: 700; list-style: none; }
+    summary::before { content: "Q. "; color: var(--brand); }
+    summary::-webkit-details-marker { display: none; }
+    details[open] summary { border-bottom: 1px solid var(--border); }
+    details p { margin: 0; padding: 14px 16px; font-size: 14px; }
+    details p::before { content: "A. "; color: var(--ok); font-weight: 700; }
+    .feedback { display: flex; gap: 8px; padding: 0 16px 14px; font-size: 13px; align-items: center; }
+    .feedback button { border: 1px solid var(--border); background: #fff; border-radius: 999px; padding: 4px 12px; cursor: pointer; font-family: inherit; }
+    .feedback button.selected { background: var(--brand); color: #fff; border-color: var(--brand); }
+
     footer { text-align: center; font-size: 12px; color: var(--muted); padding: 24px; }
   </style>
 
@@ -76,9 +163,7 @@
       var BUTTON_ID = 'startCobrowseButton';
       var isReady = false;
 
-      function getSdk() {
-        return window.ZoomZccCobrowseSDK;
-      }
+      function getSdk() { return window.ZoomZccCobrowseSDK; }
 
       function setStatus(text, ready) {
         var status = document.getElementById('cobrowseStatus');
@@ -152,27 +237,338 @@
 <body>
   <header>
     <div class="header-inner">
-      <div class="logo">サポートセンター</div>
+      <div class="logo">サポートセンター<small>Zoom Contact Center コブラウズ デモ</small></div>
+      <div class="cobrowse-box">
+        <span id="cobrowseStatus" class="cobrowse-status">画面共有サポートを準備中です…</span>
+        <!-- ③ コブラウズ開始ボタン（SDKの準備完了後に有効化） -->
+        <button id="startCobrowseButton" type="button" disabled>画面共有サポートを開始</button>
+      </div>
     </div>
   </header>
 
   <main>
-    <section class="card">
-      <h1>画面共有サポート</h1>
-      <p class="lead">オペレーターがお客さまと同じ画面を見ながらご案内します。</p>
+    <!-- ページ内タブ（ブラウザのタブではなく、同じページ内で表示を切り替え） -->
+    <div class="tabs" role="tablist">
+      <button class="tab-btn" role="tab" aria-selected="true" data-tab="tab-procedure" id="tabbtn-procedure">来店予約</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-tab="tab-sim" id="tabbtn-sim">ローンシミュレーション</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-tab="tab-faq" id="tabbtn-faq">よくあるご質問</button>
+    </div>
 
-      <!-- ③ コブラウズ開始ボタン（SDKの準備完了後に有効化） -->
-      <button id="startCobrowseButton" type="button" disabled>画面共有サポートを開始</button>
-      <span id="cobrowseStatus" class="cobrowse-status">画面共有サポートを準備中です…</span>
+    <!-- ===== タブ1：来店予約（ステップ形式フォーム） ===== -->
+    <section id="tab-procedure" class="tab-panel active" role="tabpanel">
+      <div class="card">
+        <h2>来店予約</h2>
+        <p class="sub">ご用件と希望日時を選んで予約します。操作がわからない場合は、オペレーターがご案内します。</p>
 
-      <div class="steps">
-        <div class="step"><b>STEP 1</b>サポートセンターへお電話ください</div>
-        <div class="step"><b>STEP 2</b>オペレーターの案内後、「画面共有サポートを開始」を押してください</div>
-        <div class="step"><b>STEP 3</b>表示された画面に、オペレーターから伝えられたコードを入力してください</div>
+        <div class="stepper" id="stepper">
+          <div data-step="1" class="current">1. ご用件</div>
+          <div data-step="2">2. 日時・内容</div>
+          <div data-step="3">3. 確認</div>
+          <div data-step="4">4. 完了</div>
+        </div>
+
+        <!-- STEP 1 -->
+        <div class="step-panel active" data-step="1">
+          <h3>ご用件を選択してください<span class="req">必須</span></h3>
+          <div class="choice-grid" style="margin-bottom:20px">
+            <label class="choice"><input type="radio" name="purpose" value="口座開設"><span>口座開設<small>普通預金・定期預金</small></span></label>
+            <label class="choice"><input type="radio" name="purpose" value="住宅ローン相談"><span>住宅ローン相談<small>新規・借り換え</small></span></label>
+            <label class="choice"><input type="radio" name="purpose" value="資産運用相談"><span>資産運用相談<small>投資信託・NISA</small></span></label>
+            <label class="choice"><input type="radio" name="purpose" value="相続手続き"><span>相続手続き<small>必要書類のご案内</small></span></label>
+            <label class="choice"><input type="radio" name="purpose" value="その他"><span>その他<small>上記以外のご用件</small></span></label>
+          </div>
+          <p class="error" id="err1">ご用件を選択してください。</p>
+          <div class="actions">
+            <span></span>
+            <button type="button" class="btn btn-primary" data-next="2">次へ</button>
+          </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step-panel" data-step="2">
+          <h3>希望日時</h3>
+          <div class="grid">
+            <div>
+              <label class="field" for="branch">来店店舗<span class="req">必須</span></label>
+              <select id="branch">
+                <option value="">選択してください</option>
+                <option>本店営業部</option>
+                <option>駅前支店</option>
+                <option>中央支店</option>
+                <option>北口支店</option>
+              </select>
+            </div>
+            <div>
+              <label class="field" for="visitDate">来店希望日<span class="req">必須</span></label>
+              <input type="date" id="visitDate">
+            </div>
+            <div>
+              <label class="field" for="visitTime">時間帯<span class="req">必須</span></label>
+              <select id="visitTime">
+                <option value="">選択してください</option>
+                <option>9:00〜10:00</option>
+                <option>10:00〜11:00</option>
+                <option>11:00〜12:00</option>
+                <option>13:00〜14:00</option>
+                <option>14:00〜15:00</option>
+              </select>
+            </div>
+            <div>
+              <label class="field" for="people">来店人数</label>
+              <input type="number" id="people" min="1" max="5" value="1">
+            </div>
+          </div>
+
+          <h3>ご相談方法</h3>
+          <div class="radio-row" style="margin-bottom:20px">
+            <label><input type="radio" name="style" value="窓口" checked> 窓口で相談</label>
+            <label><input type="radio" name="style" value="個室"> 個室で相談</label>
+            <label><input type="radio" name="style" value="オンライン"> オンラインで相談</label>
+          </div>
+
+          <h3>事前にお伝えしたいこと</h3>
+          <textarea id="memo" maxlength="200" placeholder="例）借り換えを検討しています"></textarea>
+          <div class="counter"><span id="memoCount">0</span> / 200文字</div>
+
+          <h3 style="margin-top:16px">お持ちいただくもの（確認用）</h3>
+          <div class="checks">
+            <label><input type="checkbox" class="bring" value="本人確認書類"> 本人確認書類（運転免許証など）</label>
+            <label><input type="checkbox" class="bring" value="通帳・キャッシュカード"> 通帳・キャッシュカード</label>
+            <label><input type="checkbox" class="bring" value="お届け印"> お届け印</label>
+          </div>
+          <p class="error" id="err2">来店店舗・来店希望日・時間帯を入力してください。</p>
+
+          <div class="actions">
+            <button type="button" class="btn btn-secondary" data-prev="1">戻る</button>
+            <button type="button" class="btn btn-primary" data-next="3">確認画面へ</button>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step-panel" data-step="3">
+          <h3>入力内容の確認</h3>
+          <table class="summary"><tbody id="summaryBody"></tbody></table>
+          <div class="checks">
+            <label><input type="checkbox" id="agree"> 予約内容を確認しました<span class="req">必須</span></label>
+          </div>
+          <p class="error" id="err3">確認のチェックを入れてください。</p>
+          <div class="actions">
+            <button type="button" class="btn btn-secondary" data-prev="2">修正する</button>
+            <button type="button" class="btn btn-primary" data-next="4">予約する</button>
+          </div>
+        </div>
+
+        <!-- STEP 4 -->
+        <div class="step-panel" data-step="4">
+          <div class="done-box">
+            <p style="margin:0 0 8px;font-weight:700">ご予約を受け付けました（デモ）</p>
+            <p style="margin:0">予約番号</p>
+            <p class="num" id="reserveNo" style="margin:0 0 8px">-</p>
+            <p style="margin:0;font-size:13px">※デモのため、実際の予約・送信は行われません。</p>
+          </div>
+          <div class="actions" style="justify-content:center;margin-top:20px">
+            <button type="button" class="btn btn-secondary" id="resetBtn">最初からやり直す</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== タブ2：ローンシミュレーション ===== -->
+    <section id="tab-sim" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <h2>ローンシミュレーション</h2>
+        <p class="sub">借入額・期間・金利を変えると、毎月の返済額の目安を計算します（元利均等返済）。</p>
+        <div class="sim">
+          <div>
+            <label class="field" for="amount">借入額</label>
+            <div class="range-val"><span id="amountVal">3,000</span>万円</div>
+            <input type="range" id="amount" min="100" max="8000" step="100" value="3000">
+
+            <label class="field" for="years" style="margin-top:16px">返済期間</label>
+            <select id="years">
+              <option value="10">10年</option>
+              <option value="20">20年</option>
+              <option value="25">25年</option>
+              <option value="30">30年</option>
+              <option value="35" selected>35年</option>
+            </select>
+
+            <label class="field" for="rate" style="margin-top:16px">金利（年率%）</label>
+            <input type="number" id="rate" min="0" max="10" step="0.05" value="0.80">
+
+            <div class="radio-row" style="margin-top:16px">
+              <label><input type="radio" name="rateType" value="変動" checked> 変動金利</label>
+              <label><input type="radio" name="rateType" value="固定"> 固定金利</label>
+            </div>
+
+            <div class="actions" style="margin-top:20px">
+              <button type="button" class="btn btn-secondary" id="simReset">リセット</button>
+              <button type="button" class="btn btn-primary" id="simCalc">計算する</button>
+            </div>
+          </div>
+          <div class="result" aria-live="polite">
+            <div style="font-size:14px;color:var(--muted)">毎月の返済額（目安）</div>
+            <div class="big" id="monthly">-</div>
+            <dl>
+              <dt>返済総額</dt><dd id="total">-</dd>
+              <dt>うち利息</dt><dd id="interest">-</dd>
+              <dt>金利タイプ</dt><dd id="typeOut">-</dd>
+            </dl>
+            <p style="font-size:12px;color:var(--muted);margin:12px 0 0">※デモ用の概算です。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== タブ3：よくあるご質問 ===== -->
+    <section id="tab-faq" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <h2>よくあるご質問</h2>
+        <p class="sub">質問をクリックすると回答が開きます。</p>
+        <details>
+          <summary>画面共有サポートでは、どこまで見えますか？</summary>
+          <p>オペレーターに見えるのはこのページだけです。ほかのタブやパソコン内のアプリは見えません。</p>
+          <div class="feedback">役に立ちましたか？ <button type="button">はい</button><button type="button">いいえ</button></div>
+        </details>
+        <details>
+          <summary>オペレーターが勝手に入力することはありますか？</summary>
+          <p>ありません。オペレーターは画面の確認と案内（指し示し）のみで、入力や送信はお客さまご自身が行います。</p>
+          <div class="feedback">役に立ちましたか？ <button type="button">はい</button><button type="button">いいえ</button></div>
+        </details>
+        <details>
+          <summary>画面共有はいつでも終了できますか？</summary>
+          <p>はい。画面上部のバナーから、いつでも終了できます。</p>
+          <div class="feedback">役に立ちましたか？ <button type="button">はい</button><button type="button">いいえ</button></div>
+        </details>
+        <details>
+          <summary>来店予約の変更はできますか？</summary>
+          <p>予約番号をお伝えいただければ、お電話で変更を承ります。</p>
+          <div class="feedback">役に立ちましたか？ <button type="button">はい</button><button type="button">いいえ</button></div>
+        </details>
       </div>
     </section>
   </main>
 
-  <footer>Zoom Contact Center コブラウズ デモページ</footer>
+  <footer>Zoom Contact Center コブラウズ デモページ（入力内容は送信・保存されません）</footer>
+
+  <!-- ④ デモ画面の操作処理 -->
+  <script>
+    (function () {
+      var $ = function (s, r) { return (r || document).querySelector(s); };
+      var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+      /* --- ページ内タブ --- */
+      $$('.tab-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          $$('.tab-btn').forEach(function (b) { b.setAttribute('aria-selected', 'false'); });
+          $$('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+          btn.setAttribute('aria-selected', 'true');
+          $('#' + btn.dataset.tab).classList.add('active');
+        });
+      });
+
+      /* --- 来店予約ステップ --- */
+      var dateInput = $('#visitDate');
+      var today = new Date();
+      var toISO = function (d) { return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+      dateInput.min = toISO(today);
+
+      function showStep(n) {
+        $$('.step-panel').forEach(function (p) { p.classList.toggle('active', p.dataset.step === String(n)); });
+        $$('#stepper div').forEach(function (s) {
+          var i = Number(s.dataset.step);
+          s.className = i < n ? 'done' : (i === n ? 'current' : '');
+        });
+        $$('.error').forEach(function (e) { e.classList.remove('show'); });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function value(name) { var c = $('input[name="' + name + '"]:checked'); return c ? c.value : ''; }
+
+      function validate(step) {
+        if (step === 1) return !!value('purpose');
+        if (step === 2) return $('#branch').value && dateInput.value && $('#visitTime').value;
+        if (step === 3) return $('#agree').checked;
+        return true;
+      }
+
+      function buildSummary() {
+        var bring = $$('.bring:checked').map(function (c) { return c.value; });
+        var rows = [
+          ['ご用件', value('purpose')],
+          ['来店店舗', $('#branch').value],
+          ['来店希望日', dateInput.value.replace(/-/g, '/')],
+          ['時間帯', $('#visitTime').value],
+          ['来店人数', $('#people').value + '名'],
+          ['ご相談方法', value('style')],
+          ['事前にお伝えしたいこと', $('#memo').value || '（なし）'],
+          ['お持ちいただくもの', bring.length ? bring.join('、') : '（未確認）']
+        ];
+        var body = $('#summaryBody');
+        body.innerHTML = '';
+        rows.forEach(function (r) {
+          var tr = document.createElement('tr');
+          var th = document.createElement('th'); th.textContent = r[0];
+          var td = document.createElement('td'); td.textContent = r[1];
+          tr.appendChild(th); tr.appendChild(td); body.appendChild(tr);
+        });
+      }
+
+      $$('[data-next]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var current = Number(btn.closest('.step-panel').dataset.step);
+          if (!validate(current)) { $('#err' + current).classList.add('show'); return; }
+          var next = Number(btn.dataset.next);
+          if (next === 3) buildSummary();
+          if (next === 4) $('#reserveNo').textContent = 'R-' + String(Math.floor(100000 + Math.random() * 900000));
+          showStep(next);
+        });
+      });
+      $$('[data-prev]').forEach(function (btn) {
+        btn.addEventListener('click', function () { showStep(Number(btn.dataset.prev)); });
+      });
+      $('#resetBtn').addEventListener('click', function () {
+        $$('.step-panel input[type="radio"][name="purpose"], .bring, #agree').forEach(function (i) { i.checked = false; });
+        $('input[name="style"][value="窓口"]').checked = true;
+        ['#branch', '#visitTime', '#memo'].forEach(function (s) { $(s).value = ''; });
+        dateInput.value = ''; $('#people').value = 1; $('#memoCount').textContent = '0';
+        showStep(1);
+      });
+      $('#memo').addEventListener('input', function (e) { $('#memoCount').textContent = e.target.value.length; });
+
+      /* --- ローンシミュレーション --- */
+      var yen = function (n) { return Math.round(n).toLocaleString('ja-JP') + '円'; };
+      $('#amount').addEventListener('input', function (e) {
+        $('#amountVal').textContent = Number(e.target.value).toLocaleString('ja-JP');
+      });
+      function calc() {
+        var principal = Number($('#amount').value) * 10000;
+        var months = Number($('#years').value) * 12;
+        var r = Number($('#rate').value) / 100 / 12;
+        var monthly = r === 0 ? principal / months : principal * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1);
+        $('#monthly').textContent = yen(monthly);
+        $('#total').textContent = yen(monthly * months);
+        $('#interest').textContent = yen(monthly * months - principal);
+        $('#typeOut').textContent = value('rateType');
+      }
+      $('#simCalc').addEventListener('click', calc);
+      $('#simReset').addEventListener('click', function () {
+        $('#amount').value = 3000; $('#amountVal').textContent = '3,000';
+        $('#years').value = '35'; $('#rate').value = '0.80';
+        $('input[name="rateType"][value="変動"]').checked = true;
+        ['#monthly', '#total', '#interest', '#typeOut'].forEach(function (s) { $(s).textContent = '-'; });
+      });
+
+      /* --- FAQ 評価ボタン --- */
+      $$('.feedback').forEach(function (fb) {
+        $$('button', fb).forEach(function (b) {
+          b.addEventListener('click', function () {
+            $$('button', fb).forEach(function (x) { x.classList.remove('selected'); });
+            b.classList.add('selected');
+          });
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
